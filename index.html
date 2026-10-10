@@ -2,8 +2,10 @@
 <html lang="ckb" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>سیستەمی بەڕێوەبردنی نۆزڵ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>سیستەمی نۆزڵی دیزڵ</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <style>
 :root{--bg:#0b1220;--panel:#121d30;--panel2:#18263d;--text:#eef4ff;--muted:#a9b8ce;--line:#2b3c56;--accent:#4f8cff;--green:#24b47e;--red:#ef5350;--gold:#f6bd4b}
 *{box-sizing:border-box}
@@ -12,7 +14,7 @@ body{margin:0;background:radial-gradient(ellipse at top,#172b48 0,#0b1220 58%);f
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
 h1{font-size:clamp(23px,4vw,34px);margin:0 0 7px}
 .subtitle{color:var(--muted);margin:0;line-height:1.7}
-.pill{border:1px solid var(--line);border-radius:999px;padding:9px 14px;color:#d7e5ff;background:#101b2c;white-space:nowrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:9px 14px;color:#d7e5ff;background:#101b2c;white-space:nowrap;display:flex;gap:10px;align-items:center}
 .grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
 .card{background:rgba(18,29,48,.96);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 12px 32px #0002}
 h2{font-size:20px;margin:0 0 15px}
@@ -34,13 +36,16 @@ button:active{transform:scale(.98)}
 .entry{border:1px solid var(--line);background:var(--panel2);border-radius:13px;padding:14px}
 .entry-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
 .code{font-size:18px;font-weight:800;letter-spacing:.4px;direction:ltr;unicode-bidi:isolate;display:inline-block}
-.desc{white-space:pre-wrap;overflow-wrap:anywhere;color:#d7e1f0;line-height:1.65;margin-top:6px}
+.status{color:var(--green)}
+.desc{white-space:pre-wrap;overflow-wrap:anywhere;color:#d7e1f0;line-height:1.65}
 .entry-actions{display:flex;gap:7px;margin-top:11px}
 .entry-actions button{padding:8px 11px;font-size:13px}
 .empty{border:1px dashed #3b4e68;border-radius:13px;text-align:center;padding:26px 12px;color:var(--muted);line-height:1.8}
 .notice{display:none;margin:0 0 14px;padding:11px 13px;border-radius:10px;line-height:1.6}
 .notice.show{display:block}.notice.ok{background:#143b31;color:#a9f5d5}.notice.err{background:#44252b;color:#ffc0c0}
 .foot{color:var(--muted);font-size:12px;line-height:1.7;margin-top:18px}
+#adminSection { display: none; }
+.admin-badge { background: var(--green); color: #0b1220; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
 @media(max-width:760px){body{padding:13px}.grid{grid-template-columns:1fr}.card{padding:16px}header{align-items:flex-start}}
 </style>
 </head>
@@ -48,22 +53,26 @@ button:active{transform:scale(.98)}
 <div class="container">
 <header>
   <div>
-    <h1>🔧 سیستەمی نۆزڵ</h1>
-    <p class="subtitle">زیادکردن، گەڕان، سڕینەوە و بەڕێوەبردنی لیستی نۆزڵەکان</p>
+    <h1>🔧 سیستەمی نۆزڵی دیزڵ</h1>
+    <p class="subtitle" id="subTitleText">گەڕان و بەڕێوەبردنی لیست</p>
   </div>
-  <div class="pill">📦 ژمارەی نۆزڵەکان: <strong id="totalTop">0</strong></div>
+  <div class="pill">
+    <span>📦 ژمارە: <strong id="totalTop">0</strong></span>
+    <button id="authBtn" class="secondary" style="padding:4px 10px; font-size:12px;" type="button">🔐 چوونەژوورەوەی تایبەت</button>
+  </div>
 </header>
 
 <div id="notice" class="notice" role="status" aria-live="polite"></div>
 
 <div class="grid">
-  <section class="card">
-    <h2>➕ زیادکردنی نۆزڵ</h2>
+  <!-- بەشی زیادکردن و بەڕێوەبردن (تەنیا بۆ خاوەن موبایلەکان دەردەکەوێت) -->
+  <section class="card" id="adminSection">
+    <h2>➕ زیادکردنی نۆزڵ <span class="admin-badge">تایبەت</span></h2>
     <form id="addForm">
       <label for="code">کۆدی نۆزڵ (تەنیا A-Z و 0-9)</label>
-      <input id="code" name="code" autocomplete="off" placeholder="نموونە: P307" required pattern="[A-Za-z0-9]+" title="تەنیا حەرفی ئینگلیزی و ژمارە" />
-      <label for="description">وەسفی نۆزڵ</label>
-      <textarea id="description" name="description" placeholder="وەسفی نۆزڵ بنووسە..." required></textarea>
+      <input id="code" name="code" autocomplete="off" placeholder="نموونە: D-N50" required pattern="[A-Za-z0-9\-]+" title="تەنیا حەرفی ئینگلیزی، ژمارە و -" />
+      <label for="description">وەسف و زانیاری تر</label>
+      <textarea id="description" name="description" placeholder="وەسف و زانیاری نۆزڵ بنووسە..." required></textarea>
       <button class="primary" type="submit">💾 خەزنکردنی نۆزڵ</button>
     </form>
     <div class="tools">
@@ -71,17 +80,18 @@ button:active{transform:scale(.98)}
       <button class="secondary" id="importBtn" type="button">⬆️ هێنانەوەی لیست</button>
       <input id="importFile" type="file" accept=".json,application/json" hidden>
     </div>
-    <p class="foot">داتا لەم وێبگەڕەدا خەزن دەبێت. بۆ پاراستنی لیستەکەت، بە شێوەی JSON دەرگیری بکە و لە شوێنێکی پارێزراو بیپارێزە.</p>
+    <button class="danger" id="logoutBtn" style="width:100%; margin-top:12px;" type="button">🔒 دەرچوون لە دۆخی بەڕێوەبەر</button>
   </section>
 
-  <section class="card">
+  <!-- بەشی گەڕان بۆ هەمووان -->
+  <section class="card" style="grid-column: span 2;" id="searchCard">
     <h2>🔎 گەڕان لە لیست</h2>
-    <label for="search">تەنیا کۆدی نۆزڵ بنووسە</label>
+    <label for="search">تەنیا کۆدی نۆزڵ بنووسە بۆ دۆزینەوەی</label>
     <div class="searchbar">
-      <input id="search" autocomplete="off" placeholder="نموونە: P307" />
+      <input id="search" autocomplete="off" placeholder="نموونە: D-N50" />
       <button class="secondary" id="clearSearch" type="button">پاککردنەوە</button>
     </div>
-    <div class="stats"><span id="resultCount">0 ئەنجام</span><span>گەڕان بە کۆد</span></div>
+    <div class="stats"><span id="resultCount">0 ئەنجام</span></div>
     <div id="entries" class="entries"></div>
   </section>
 </div>
@@ -89,14 +99,25 @@ button:active{transform:scale(.98)}
 
 <script>
 (() => {
-  const STORAGE_KEY = "nozl_list_v2";
+  // پینی تایبەت بە خۆت و باوکت (دەتوانیت لێرە بیگۆڕیت)
+  const ADMIN_PIN = "1234"; 
+  const STORAGE_KEY = "diesel_nozl_shared_list_v1";
+  const AUTH_KEY = "diesel_admin_logged";
   const $ = (id) => document.getElementById(id);
+
   let items = loadItems();
+  let isAdmin = sessionStorage.getItem(AUTH_KEY) === "true";
 
   function loadItems() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed.filter(x => x && typeof x.code === "string" && typeof x.description === "string") : [];
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      // نموونەی داتای سەرەتایی ئەگەر هێشتا هیچ نەبوو
+      if (!parsed) {
+        return [
+          { code: "D50", text: "D50 - نۆزڵی سەرەکی دیزڵ بۆ مەکینەی کێڵگەیی - نرخ: 120$" }
+        ];
+      }
+      return Array.isArray(parsed) ? parsed.filter(x => x && typeof x.code === "string" && typeof x.text === "string") : [];
     } catch { return []; }
   }
 
@@ -106,8 +127,7 @@ button:active{transform:scale(.98)}
   }
 
   function normalizeCode(value) { return value.trim().toUpperCase(); }
-  function validCode(value) { return /^[A-Z0-9]+$/.test(value); }
-
+  
   function showNotice(text, type="ok") {
     const n = $("notice");
     n.textContent = text;
@@ -116,123 +136,152 @@ button:active{transform:scale(.98)}
     showNotice.timer = window.setTimeout(() => n.className = "notice", 4500);
   }
 
+  function updateAdminUI() {
+    if (isAdmin) {
+      $("adminSection.style") || ($("adminSection").style.display = "block");
+      $("searchCard").style.gridColumn = "span 1";
+      $("authBtn").textContent = "👑 بەڕێوەبەر (چالاکە)";
+      $("authBtn").style.background = "var(--green)";
+      $("authBtn").style.color = "#0b1220";
+    } else {
+      $("adminSection").style.display = "none";
+      $("searchCard").style.gridColumn = "span 2";
+      $("authBtn").textContent = "🔐 چوونەژوورەوەی تایبەت";
+      $("authBtn").style.background = "#253650";
+      $("authBtn").style.color = "#e7efff";
+    }
+    render();
+  }
+
+  $("authBtn").addEventListener("click", () => {
+    if (isAdmin) {
+      alert("تۆ پێشتر چوونەتە ژوورەوە وەک بەڕێوەبەر.");
+      return;
+    }
+    const pin = prompt("تکایە پینی نهێنی تایبەت بنووسە بۆ چوونەژوورەوە:");
+    if (pin === ADMIN_PIN) {
+      isAdmin = true;
+      sessionStorage.setItem(AUTH_KEY, "true");
+      updateAdminUI();
+      showNotice("✅ بە سەرکەوتوویی چوویتە ژوورەوە وەک بەڕێوەبەر.");
+    } else if (pin !== null) {
+      showNotice("❌ پینی نهێنی هەڵەیە!", "err");
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", () => {
+    isAdmin = false;
+    sessionStorage.removeItem(AUTH_KEY);
+    updateAdminUI();
+    showNotice("🔒 لە دۆخی بەڕێوەبەر دەرچوویت.");
+  });
+
   function render() {
     const query = normalizeCode($("search").value);
     $("totalTop").textContent = items.length;
-
-    const container = $("entries");
-    container.replaceChildren();
-
-    // If search box is empty, don't show any items in the bottom list
+    
     if (!query) {
+      $("entries").replaceChildren();
       $("resultCount").textContent = "0 ئەنجام";
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "🔍 بۆ پیشاندانی نۆزڵ، کۆدەکەی لە خانەی گەڕان لە سەرەوە بنووسە.";
-      container.appendChild(empty);
       return;
     }
 
     const filtered = items.filter(item => item.code.includes(query));
     $("resultCount").textContent = `${filtered.length} ئەنجام`;
+    const container = $("entries");
+    container.replaceChildren();
+
+    filtered.forEach(item => {
+      const article = document.createElement("article");
+      article.className = "entry";
+      const top = document.createElement("div"); top.className = "entry-top";
+      const code = document.createElement("span"); code.className = "code"; code.textContent = item.code;
+      const status = document.createElement("span"); status.className = "status"; status.textContent = "✅ هەیە";
+      top.append(code, status);
+      
+      const desc = document.createElement("div"); desc.className = "desc"; desc.textContent = item.text;
+      
+      article.append(top, desc);
+
+      // ئەگەر بەڕێوەبەر بوو، دوگمەی دەستکاری و سڕینەوەی بۆ دەردەکەوێت
+      if (isAdmin) {
+        const actions = document.createElement("div"); actions.className = "entry-actions";
+        
+        const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "✏️ دەستکاری";
+        edit.addEventListener("click", () => editItem(item.code));
+        
+        const del = document.createElement("button"); del.className = "danger"; del.textContent = "🗑️ سڕینەوە";
+        del.addEventListener("click", () => deleteItem(item.code));
+        
+        actions.append(edit, del);
+        article.append(actions);
+      }
+
+      container.appendChild(article);
+    });
 
     if (!filtered.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
       empty.textContent = `❌ نۆزڵی ${query} لە لیستدا نەدۆزرایەوە.`;
       container.appendChild(empty);
-      return;
     }
-
-    filtered.forEach(item => {
-      const article = document.createElement("article");
-      article.className = "entry";
-      
-      const top = document.createElement("div"); 
-      top.className = "entry-top";
-      
-      const codeSpan = document.createElement("span"); 
-      codeSpan.className = "code"; 
-      codeSpan.textContent = item.code;
-      
-      const status = document.createElement("span"); 
-      status.textContent = "✅ هەیە"; 
-      status.style.color = "var(--green)";
-      
-      top.append(codeSpan, status);
-
-      const desc = document.createElement("div"); 
-      desc.className = "desc"; 
-      desc.textContent = item.description;
-
-      const actions = document.createElement("div"); 
-      actions.className = "entry-actions";
-      
-      const edit = document.createElement("button"); 
-      edit.className = "secondary"; 
-      edit.textContent = "✏️ دەستکاریکردن";
-      edit.addEventListener("click", () => editItem(item.code));
-      
-      const del = document.createElement("button"); 
-      del.className = "danger"; 
-      del.textContent = "🗑️ سڕینەوە";
-      del.addEventListener("click", () => deleteItem(item.code));
-      
-      actions.append(edit, del);
-      article.append(top, desc, actions);
-      container.appendChild(article);
-    });
   }
 
-  $("addForm").addEventListener("submit", event => {
+  $("addForm")?.addEventListener("submit", event => {
     event.preventDefault();
-    const code = normalizeCode($("code").value);
+    if (!isAdmin) return;
+    const codeRaw = $("code").value;
+    const code = normalizeCode(codeRaw);
     const description = $("description").value.trim();
-
-    if (!validCode(code)) return showNotice("⚠️ کۆد دەبێت تەنیا حەرفی ئینگلیزی و ژمارە بێت.", "err");
+    
+    if (!/^[A-Z0-9\-]+$/.test(code)) return showNotice("⚠️ کۆد دەبێت تەنیا حەرفی ئینگلیزی، ژمارە و - بێت.", "err");
     if (!description) return showNotice("⚠️ تکایە وەسفی نۆزڵ بنووسە.", "err");
 
     const index = items.findIndex(item => item.code === code);
-
+    const text = `${code} - ${description}`;
+    
     if (index >= 0) {
-      if (!confirm(`کۆدی ${code} پێشتر هەیە. دەتەوێت وەسفەکەی نوێ بکەیتەوە؟`)) return;
-      items[index] = { code, description };
+      if (!confirm(`کۆدی ${code} پێشتر هەیە. نوێی بکەینەوە؟`)) return;
+      items[index] = { code, text };
       showNotice(`✅ زانیاری نۆزڵی ${code} نوێ کرایەوە.`);
     } else {
-      items.push({ code, description });
+      items.push({ code, text });
       showNotice(`✅ نۆزڵی ${code} خەزن کرا.`);
     }
-
     saveItems();
     $("addForm").reset();
     $("search").value = code;
     render();
   });
 
-  function deleteItem(code) {
+  window.deleteItem = function(code) {
+    if (!isAdmin) return;
     if (!confirm(`دڵنیایت نۆزڵی ${code} بسڕیتەوە؟`)) return;
     items = items.filter(x => x.code !== code);
     saveItems();
     showNotice(`🗑️ نۆزڵی ${code} سڕایەوە.`);
   }
 
-  function editItem(code) {
+  window.editItem = function(code) {
+    if (!isAdmin) return;
     const item = items.find(x => x.code === code);
     if (!item) return;
-
     const newCodeRaw = prompt("کۆدی نۆزڵ:", item.code);
     if (newCodeRaw === null) return;
     const newCode = normalizeCode(newCodeRaw);
-    if (!validCode(newCode)) return showNotice("⚠️ کۆد دەبێت تەنیا A-Z و 0-9 بێت.", "err");
+    
+    if (!/^[A-Z0-9\-]+$/.test(newCode)) return showNotice("⚠️ کۆد تەنیا دەبێت ئینگلیزی و ژمارە بێت.", "err");
 
-    const newDescription = prompt("وەسفی نۆزڵ:", item.description);
+    const currentDescription = item.text.slice(item.code.length + 3);
+    const newDescription = prompt("وەسفی نۆزڵ:", currentDescription);
     if (newDescription === null) return;
-    if (!newDescription.trim()) return showNotice("⚠️ وەسف نابێت بەتاڵ بێت.", "err");
-
+    if (!newDescription.trim()) return showNotice("⚠️ وەسف بەتاڵ نەبێت.", "err");
+    
     if (newCode !== code && items.some(x => x.code === newCode)) return showNotice("⚠️ ئەم کۆدە پێشتر هەیە.", "err");
 
     items = items.filter(x => x.code !== code);
-    items.push({ code: newCode, description: newDescription.trim() });
+    items.push({ code: newCode, text: `${newCode} - ${newDescription.trim()}` });
     saveItems();
     showNotice(`✅ نۆزڵی ${newCode} دەستکاری کرا.`);
   }
@@ -240,33 +289,32 @@ button:active{transform:scale(.98)}
   $("search").addEventListener("input", render);
   $("clearSearch").addEventListener("click", () => { $("search").value = ""; render(); $("search").focus(); });
 
-  $("exportBtn").addEventListener("click", () => {
+  $("exportBtn")?.addEventListener("click", () => {
+    if (!isAdmin) return;
     const blob = new Blob([JSON.stringify(items, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "nozl-list.json"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "diesel-nozl-list.json"; a.click();
     URL.revokeObjectURL(url);
     showNotice("⬇️ لیستەکە دەرکرا.");
   });
 
-  $("importBtn").addEventListener("click", () => $("importFile").click());
-  $("importFile").addEventListener("change", async event => {
+  $("importBtn")?.addEventListener("click", () => { if(isAdmin) $("importFile").click(); });
+  $("importFile")?.addEventListener("change", async event => {
+    if (!isAdmin) return;
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     try {
       const parsed = JSON.parse(await file.text());
-      if (!Array.isArray(parsed)) throw new Error("not array");
-      const cleaned = parsed.filter(x => x && typeof x.code === "string" && typeof x.description === "string" && validCode(normalizeCode(x.code)))
-        .map(x => ({code:normalizeCode(x.code), description:x.description}));
-      if (!confirm(`${cleaned.length} نۆزڵ بهێنرێتە ناو لیستەکە؟ ئەمە لیستی ئێستا دەگۆڕێت.`)) return;
-      items = cleaned;
+      if (!Array.isArray(parsed)) throw new Error();
+      items = parsed.map(x => ({code:normalizeCode(x.code), text:x.text}));
       saveItems();
-      showNotice(`✅ ${items.length} نۆزڵ هێنرانە ناو لیستەکە.`);
+      showNotice(`✅ لیستەکە نوێکرایەوە.`);
     } catch {
-      showNotice("❌ فایلەکە دروست نییە یان JSON نییە.", "err");
+      showNotice("❌ فایلەکە هەڵەیە.", "err");
     } finally { event.target.value = ""; }
   });
 
-  render();
+  updateAdminUI();
 })();
 </script>
 </body>
