@@ -67,10 +67,10 @@ button:active{transform:scale(.98)}
   <section class="card" id="adminSection">
     <h2>➕ زیادکردنی نۆزڵ <span class="admin-badge">تایبەت</span></h2>
     <form id="addForm">
-      <label for="code">کۆدی نۆزڵ (تەنیا A-Z و 0-9)</label>
-      <input id="code" name="code" autocomplete="off" placeholder="نموونە: D-N50" required pattern="[A-Za-z0-9\-]+" title="تەنیا حەرفی ئینگلیزی، ژمارە و -" />
-      <label for="description">وەسف و زانیاری تر</label>
-      <textarea id="description" name="description" placeholder="وەسف و زانیاری نۆزڵ بنووسە..." required></textarea>
+      <label for="code">کۆدی نۆزڵ</label>
+      <input id="code" name="code" autocomplete="off" placeholder="نموونە: D50 یان هر کۆدێک" required />
+      <label for="description">وەسف و نرخ و زانیاری تر</label>
+      <textarea id="description" name="description" placeholder="وەسف و نرخ و زانیاری نۆزڵ بنووسە..." required></textarea>
       <button class="primary" type="submit">💾 خەزنکردنی نۆزڵ</button>
     </form>
     <div class="tools">
@@ -83,9 +83,9 @@ button:active{transform:scale(.98)}
 
   <section class="card" style="grid-column: span 2;" id="searchCard">
     <h2>🔎 گەڕان لە لیست</h2>
-    <label for="search">تەنیا کۆدی نۆزڵ بنووسە بۆ دۆزینەوەی</label>
+    <label for="search">کۆد یان بەشێک لە نۆزڵ بنووسە بۆ دۆزینەوەی</label>
     <div class="searchbar">
-      <input id="search" autocomplete="off" placeholder="نموونە: D-N50" />
+      <input id="search" autocomplete="off" placeholder="گەڕان بەدوای کۆد..." />
       <button class="secondary" id="clearSearch" type="button">پاککردنەوە</button>
     </div>
     <div class="stats"><span id="resultCount">0 ئەنجام</span></div>
@@ -97,8 +97,8 @@ button:active{transform:scale(.98)}
 <script>
 (() => {
   const ADMIN_PIN = "amad1122Aabb@"; 
-  const STORAGE_KEY = "diesel_nozl_shared_list_v1";
-  const AUTH_KEY = "diesel_admin_logged";
+  const STORAGE_KEY = "diesel_nozl_shared_list_v2";
+  const AUTH_KEY = "diesel_admin_logged_v2";
   const $ = (id) => document.getElementById(id);
 
   let items = loadItems();
@@ -109,10 +109,11 @@ button:active{transform:scale(.98)}
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (!parsed) {
         return [
-          { code: "D50", text: "D50 - نۆزڵی سەرەکی دیزڵ بۆ مەکینەی کێڵگەیی - نرخ: 120$" }
+          { code: "D50", text: "نۆزڵی سەرەکی دیزڵ بۆ مەکینەی کێڵگەیی - نرخ: 120$" },
+          { code: "DN-100", text: "نۆزڵی تایبەت بۆ بارهەڵگر - نرخ: 250$" }
         ];
       }
-      return Array.isArray(parsed) ? parsed.filter(x => x && typeof x.code === "string" && typeof x.text === "string") : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch { return []; }
   }
 
@@ -121,8 +122,6 @@ button:active{transform:scale(.98)}
     render();
   }
 
-  function normalizeCode(value) { return value.trim().toUpperCase(); }
-  
   function showNotice(text, type="ok") {
     const n = $("notice");
     if (!n) return;
@@ -194,7 +193,7 @@ button:active{transform:scale(.98)}
 
     if (!searchInput || !container) return;
 
-    const query = normalizeCode(searchInput.value);
+    const query = searchInput.value.trim().toLowerCase();
     if (totalTop) totalTop.textContent = items.length;
     
     if (!query) {
@@ -203,7 +202,11 @@ button:active{transform:scale(.98)}
       return;
     }
 
-    const filtered = items.filter(item => item.code.includes(query));
+    const filtered = items.filter(item => 
+      item.code.toLowerCase().includes(query) || 
+      item.text.toLowerCase().includes(query)
+    );
+
     if (resultCount) resultCount.textContent = `${filtered.length} ئەنجام`;
     container.replaceChildren();
 
@@ -237,7 +240,7 @@ button:active{transform:scale(.98)}
     if (!filtered.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = `❌ نۆزڵی ${query} لە لیستدا نەدۆزرایەوە.`;
+      empty.textContent = `❌ هیچ ئەنجامێک بۆ "${query}" نەدۆزرایەوە.`;
       container.appendChild(empty);
     }
   }
@@ -247,15 +250,12 @@ button:active{transform:scale(.98)}
     addFormEl.addEventListener("submit", event => {
       event.preventDefault();
       if (!isAdmin) return;
-      const codeRaw = $("code").value;
-      const code = normalizeCode(codeRaw);
-      const description = $("description").value.trim();
+      const code = $("code").value.trim();
+      const text = $("description").value.trim();
       
-      if (!/^[A-Z0-9\-]+$/.test(code)) return showNotice("⚠️ کۆد دەبێت تەنیا حەرفی ئینگلیزی، ژمارە و - بێت.", "err");
-      if (!description) return showNotice("⚠️ تکایە وەسفی نۆزڵ بنووسە.", "err");
+      if (!code || !text) return showNotice("⚠️ تکایە هەموو خانەکان پڕبکەرەوە.", "err");
 
-      const index = items.findIndex(item => item.code === code);
-      const text = `${code} - ${description}`;
+      const index = items.findIndex(item => item.code.toLowerCase() === code.toLowerCase());
       
       if (index >= 0) {
         if (!confirm(`کۆدی ${code} پێشتر هەیە. نوێی بکەینەوە؟`)) return;
@@ -284,23 +284,17 @@ button:active{transform:scale(.98)}
     if (!isAdmin) return;
     const item = items.find(x => x.code === code);
     if (!item) return;
-    const newCodeRaw = prompt("کۆدی نۆزڵ:", item.code);
-    if (newCodeRaw === null) return;
-    const newCode = normalizeCode(newCodeRaw);
+    const newCode = prompt("کۆدی نۆزڵ:", item.code);
+    if (newCode === null) return;
+    const newText = prompt("وەسف و نرخ:", item.text);
+    if (newText === null) return;
     
-    if (!/^[A-Z0-9\-]+$/.test(newCode)) return showNotice("⚠️ کۆد تەنیا دەبێت ئینگلیزی و ژمارە بێت.", "err");
-
-    const currentDescription = item.text.slice(item.code.length + 3);
-    const newDescription = prompt("وەسفی نۆزڵ:", currentDescription);
-    if (newDescription === null) return;
-    if (!newDescription.trim()) return showNotice("⚠️ وەسف بەتاڵ نەبێت.", "err");
-    
-    if (newCode !== code && items.some(x => x.code === newCode)) return showNotice("⚠️ ئەم کۆدە پێشتر هەیە.", "err");
+    if (!newCode.trim() || !newText.trim()) return showNotice("⚠️ خانەکان بەتاڵ نەبن.", "err");
 
     items = items.filter(x => x.code !== code);
-    items.push({ code: newCode, text: `${newCode} - ${newDescription.trim()}` });
+    items.push({ code: newCode.trim(), text: newText.trim() });
     saveItems();
-    showNotice(`✅ نۆزڵی ${newCode} دەستکاری کرا.`);
+    showNotice(`✅ نۆزڵەکە دەستکاری کرا.`);
   }
 
   const searchEl = $("search");
@@ -337,7 +331,7 @@ button:active{transform:scale(.98)}
       try {
         const parsed = JSON.parse(await file.text());
         if (!Array.isArray(parsed)) throw new Error();
-        items = parsed.map(x => ({code:normalizeCode(x.code), text:x.text}));
+        items = parsed;
         saveItems();
         showNotice(`✅ لیستەکە نوێکرایەوە.`);
       } catch {
